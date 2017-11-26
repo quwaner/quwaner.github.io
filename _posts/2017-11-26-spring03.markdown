@@ -1,0 +1,86 @@
+---
+layout: post
+title: Spring03
+date: 2017-09-12 13:32:20 +0300
+description: # Add post description (optional)
+img: 3.jpg # Add image post (optional)
+tags: [Holidays, Hawaii]
+---
+
+
+Spring
+
+	jdbc
+	dbutils
+	hibernate
+	jdbctemplate
+	mybatis
+
+
+	Spring jdbc Template(Spring提供的一个jdbc模板,类似于dbutils工具)
+		如何使用spring jdbc template?
+			导入相关jar包
+				spring-jdbc-4.2.4.RELEASE.jar
+				spring-tx-4.2.4.RELEASE.jar
+				还需要导入相关数据库驱动jar包
+
+		配置Spring内置的连接池DriverManagerDataSource
+			<bean id="driverManagerDataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+				<property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+				<property name="url" value="jdbc:mysql://localhost:3306/springtest"></property>
+				<property name="username" value="root"></property>
+				<property name="password" value="1234"></property>
+			</bean>
+			<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate" >
+				<property name="dataSource" ref="driverManagerDataSource"></property>
+			</bean>
+
+        配置C3P0连接池:
+        首先导入对应jar包:c3p0-0.9.2.1.jar
+        				 mchange-commons-java-0.2.3.4.jar
+
+        在applicationContext.xml文件中引入properties文件:
+         	<context:property-placeholder location="classpath:db.properties"/>
+        在自己配置中需要从properties文件中引入的信息可以使用 ${} 方式获取
+
+        jdbcTemplate CRUD:
+        	jdbcTemplate的update方法就可以执行insert update delete操作
+        	执行select操作时:
+        		a.简单数据返回:
+        		b.复杂数据返回:如果只返回一个domain对象,可以使用queryForObject方法,如果返回的
+        		是List<?>对象,可以使用query方法,但都需要Rowmapper来对resultSet进行处理
+        			RowMapper它有一个实现类BeanPropertyRowMapper,如果使用BeanPropertyRowmapper,
+        			实体类必须提供一个无参数的public构造方法,类中的bean属性名称与表中的列要对应.(注意:这个实现类)
+
+
+	Spring事务管理
+		Spring事务管理的四个有点:
+			1.提供一致的对于不同事务管理的API
+			2.支持声明式事务管理(重点)
+			3.编程事务管理(开发中应用比较少)
+			4.优秀的整合与spring的数据访问
+		Spring事务管理主要提供三个接口:
+			1.org.springframework.transaction.PlatformTransactionManager
+			在不同的持久层解决技术它的事务代码不一样.
+			在JDBC开发中:
+					Connection con = ...
+					con.setAutoCommit(false);//开启事务
+					con.rollback();
+					con.commit();
+			在Hibernate开发中:
+					Session session = ...
+					Transaction t = session.beginTransaction();
+					t.commit();
+					t.rollback();	
+			PlatformTransactionManager是一个事务管理器,可以来选择相关的平台(jdbc hibernate jpa..)
+			实现类: DataSourceTransactionManager 主要针对于JdbcTemplate开发  MyBatis开发
+					HibernateTransactionManasger主要针对于Hibernate开发
+					JpaTransactionManager 主要针对于JPA开发。
+
+			2.TranscationDefination
+			它定义事务的一些相关信息 如:隔离 传播 超时 只读
+			3.TransactionStatus	
+			主要描述事务具体的运行状态
+
+			PlatformTransactionManager:平台事务管理器
+			

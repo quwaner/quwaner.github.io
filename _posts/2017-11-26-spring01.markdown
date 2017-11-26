@@ -1,0 +1,246 @@
+---
+layout: post
+title: spring01
+date: 2017-09-12 13:32:20 +0300
+description: # Add post description (optional)
+img: 1.jpg # Add image post (optional)
+tags: [Holidays, Hawaii]
+---
+
+Spring(spring framework)是一个一站式(one-stop-shop)的分层轻量级框架  
+	ioc
+	data access
+	transcation
+
+	(一).Spring体系结构
+	1.core container(核心容器)
+		a.beans与core他们提供Spring框架最基本的功能,包含ioc和di
+		b.Context上下文对象,给予beans与cores
+		c.spel是Spring提供的一个表达式语言
+	2.Data access/integration
+		a.数据访问
+		b.集成
+	3.Web
+		a.Spring本身提供Spring MVC
+		b.也可以	与其他的web层进行集成
+	4.AOP
+		大部分情况下使用动态代理来实现
+	5.Test
+		使用Spring可以方便的进行测试		
+
+	Spring优点--方便解耦,简化开发;AOP编程的支持;声明式事务的支持;方便程序测试
+		方便集成各种优秀的框架;降低JavaEE API的使用难度		
+
+    
+    (二).IOC(inversion of controller 控制反转)		
+    1.原理:xml文件+反射技术+工厂模式 来解耦合
+    	把对象的创建权利反转,交给spring容器来初始化
+
+    	
+    (**)Spring使用步骤:
+    	1.在applicationContext.xml文件中配置bean
+    		<bean id="userService" class=""></bean>
+    	2.创建一个ApplicationContext对象	
+    		Spring中提供一个beanFactory的接口,我们一般使用他的的子接口ApplicationContext接口
+    	ClassPathXmlAppliacationContext实现类可以帮助我们在classPath路径下查找applicationContext.xml
+    	配置文件.
+
+    		<
+    		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("applicationContext.xml");
+    		applicationContext.getBean("userService");
+    			//getBean(配置文件中id名称)来获取指定的对象
+    		>
+    (三).DI(dependency injection 依赖注入)		
+    		可以在spring框架负责创建Bean对象时,动态地将依赖对象注入到bean组件
+
+    		IOC和DI的区别:
+    			IOC 控制反转,是指对象实例化权利交给spring容器来管理
+    			DI 依赖注入 在Spring创建对象的过程中,对象所依赖的属性通过配置注入到对象中
+    (四).Bean获取与实例化
+    	1.ApplicationContext和beanFactory的关系:
+    		ApplicationContext是扩展BeanFactory接口;beanFactory采取延迟加载的方案,只有真正在getBean时才会实例化Bean
+    		在在开发中,我们一般使用的是applicationContext,真正使用的是其实现类:
+		    		FileSystemXMLApplicationContext:根据文件路径获取
+		    		ClassPathXmlApplicationContext:根据类路径获取
+    		ApplicationContext在配置文件加载时,就会初始化IOC容器,并且applicationContext
+    		提供不同的应用层的Context实现.如在web开发中使用webapplicationContext
+
+    	2.获取bean(初始化IOC容器)
+    	a.使用beanFactory获取bean(延迟加载)
+	    	<
+	    	BeanFactory factory =new XMLBeanFactory(new ClassPathRescourse("applicationContext.xml"));
+	    	factory.getBean("");
+	    	>
+    	b.使用ClassPathXMLApplicationContext来获取bean
+	    	<
+	    	ApplicationContext applicationContext = new ClassPathXMLApplicationContext("applicationContext.xml");
+	    	applicationContext.getBean("");
+	    	>
+    	c.使用FileSystemXMLApplicationContext获取bean
+	    	<
+	    	ApplicationContext applicationContext = new FileSystemXMLApplicationContext("src/applicationContext.xml");
+	    	applicationContext.getBean("");
+	    	>
+    	3.bean的实例化
+    	a.无参数构造(bean类中提供无参数构造)
+    		<bean name="bean1" class="...Bean1"></bean>
+    	b.静态工厂方法(创建一个工厂类,工厂类中提供一个static返回的bean对象的方法)
+	    	public class Bean2Factory{
+	    		public static Bean2 createBean3(){
+	    			return new Bean2();
+	    		}
+	    	}
+	    	<bean name="bean2" class="...Bean2Factory" factory-method="createBean2"></bean>
+    	c.实例工厂方法(创建一个工厂类,工厂类中提供一个非static的创建bean对象的方法,在配置文件中需要将工厂配置,还需要配置bean)
+	    	public class Bean3Factory{
+	    		public Bean3 createBean3(){
+	    			return new Bean3();
+	    		}
+	    	}
+	    	<bean name="bean3" class="...Bean3Factory" ></bean>
+	    	<bean name="bean3" factory-bean="bean3Factory" factory-method="createBean3"></bean>
+	(五).Bean的作用域
+		bean声明时,有一个scope属性,用于描述bean的作用域:
+			可取值:
+				singleton:单例(默认的scope) 代表Spring ioc容器中只有一个Bean实例  
+				prototype:多例 每一次从Spring容器中获取时,都会返回一个新的实例
+					关于多例:request--actionContext--action--valueStack
+				request:用在web开发中,将bean对象request.setAttribute()存储到request域中  	
+				session:用在web开发中,将bean对象session.setAttribute()存储到session域中
+	(六).Bean的生命周期			
+		1.	instantiate bean对象实例化
+		2.	populate properties 封装属性
+		3.	如果Bean实现BeanNameAware执行setBeanName
+		4.	如果Bean实现BeanFactoryAwar或ApplicationContextAwar设置工厂setBeanFactory或上下文对象setApplicationContext
+		5.	如果存在类实现BeanPostProcessor(后处理Bean),执行postProcessBeforeInitialization
+		6.	如果Bean实现InitializingBean执行afterPropertiesSet
+		7.	调用自定义的init-method方法
+		8.	如果存在类实现BeanPostProcessor(处理Bean),执行postProcessAfterInitialization
+		9.	执行业务处理
+		10.	如果Bean实现DisposableBean执行destroy
+		11.	调用自定义的destroy-method
+		总结:第三步第四步是让Bean了解Spring容器
+			第五步第八步,可以针对指定的Bean进行功能增强,一般会使用动态代理
+			第六步第十步通过实现指定的接口来完成init和destroy操作,但是在开发中一般不用,
+			可以用第七步和第十一歩代替(初始化和销毁操作五耦合),推荐使用.但是在配置文件中
+			指定初始化和销毁的方法
+			<bean name="" class="" init-method="" destroy-method=""></bean>
+			对于bean的生命周期,需要关注两个方法:
+				1.增强bean的功能可以使用后处理bean,如果存在类实现BeanPostProcessor
+				2.如果需要初始化或销毁操作可以使用init-method   destroy-method
+
+	(七).Bean属性注入
+		a.Spring中bean属性注入有两种:
+			构造器注入:<bean name="" class=""> //前提是有对应参数的构造方法
+						//第一个属性
+						<constructor-arg index="0" type="" value=""></constructor-arg>
+						//第二个属性
+						<constructor-arg index="1" type="" value=""></constructor-arg>
+					  </bean>	
+			setter方法注入:<bean name="" class="">
+							<property name="" value="" ></property>
+							<property name="" value="" ></property>
+							<property name="" ref="" ></property>
+					 	  </bean>	
+					ref属性的作用:ref引入bean对象,完成bean之间的注入 
+		
+		b.集合属性的注入,可以使用专门的标签 来完成注入:	list set map properties
+		<bean name="" class="">	
+			<property id="list">
+				<list>
+					<value>张三</value>
+					<value>10</value>
+					<ref bean=""/>
+				</list>
+			</property>	
+			<property id="set">	
+				<set>
+					<value>张三</value>
+					<value>10</value>
+					<ref bean=""/>
+				</set>
+			</property>	
+			<property id="map">	
+				<map>
+					<entry key="" value=""></entry>
+					<entry key-ref="" value-ref=""></entry>
+				</map>
+			</property>	
+			<property id="prop">	
+				<prop>
+					<prop key="price">10000</prop>
+				</prop>
+			</property>	
+		</bean>	       //如果属性是数组类型也可以使用list完成注入
+		
+
+		c.名称空间p和c的使用(前提是使用.xsd约束)
+
+		<beans xmlns="http://www.springframework.org/schema/beans"
+   	  		   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   	  		   xmlns:p="http://www.springframework.org/schema/p"
+   	  		   xmlns:c="http://www.springframework.org/schema/c"
+  			   xsi:schemaLocation="
+     	   		 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+   
+
+		</beans>
+
+		不是真正的名称空间,是虚拟的.嵌入Spring内核中的
+		p名称空间简化setter方法注入时的<property>
+		c名称空间简化构造器注入时的<constructor-arg>
+
+	
+	(八).SpEL(spring expression language)
+			表达式格式:#{表达式}	
+
+	(九).Spring注解开发
+	Spring中使用注解,必须在applicationContext.xml文件中添加一个
+	<context:annotation-config/>作用是让Spring中常用的一些注解生效
+
+
+	bean注册(实例化对象)
+	@Component("")
+	@Controller("")
+	@Service("")
+	@Respositroy("") //dao层 
+	//为了注解能生效,配置以下标签来扫描包
+	<context:compoent-scan base-package="">	
+
+	属性依赖注入:
+	简单属性直接用@value("")
+	复杂属性:@Autowired	//默认按照类型进行注入
+			@Qualifier("")//引号内写bean中的name或者id的值(xml配置)
+						  //注解配置时,写bean注册的值
+			//这两个注解一起使用可以根据名称来进行属性注入
+			@Resource(name="")//这个注解的作用相当于上面两个注解的作用
+
+	其他注解:@Scope()//bean的作用域																					
+			@PostConstruct//相当于init-method=""
+			@PreDestroy//相当于destroy-method=""//这两种注解只有在bean的scope=singleton时有效
+
+	(十)Spring整合Junit4(相当于把ioc的加载交给了Junit )
+		导入jar包:spring-test-4.2.4-RELEASE.jar
+		@RunWith(SpringJunit4ClassRuner.class)
+		@ContextConfiguration(locations="classPath:applicationContext.xml")
+		@Autowired 来注入属性
+
+	(十一)Spring在web开发中的应用
+	 1.导入jar包:	spring-web-4.2.4-RELEASE.jar
+	 2.web.xml文件中配置listener
+		 <listener>
+		 	<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+		 </listener>
+		 这个ContextLoaderListener实现了ServletContextListener,在这个listener中
+		 ,当服务器时,将ApplicationContext对象
+		 (其实是一个它的实现类:WebApplicationContext)存入到ServletContext中
+	 	servletContext.setAttribute(WebApplicationContext.ROOT_WEB_APPLICATION_CONTEXT_ATTRIBUTE,this.context)
+
+	 3.需要在web.xml文件中配置applicationContext.xml文件的位置
+	 		默认在web-inf目录下查找applicationContext.xml文件
+	 		如果不在默认位置,需啊哟在web.xml文件中如下配置
+	 		<context-param>
+	 			<param-name>contextConfigLocation<param-name>
+	 			<param-value>classpath:applicationContext.xml<param-value>
+	 		</context-param>

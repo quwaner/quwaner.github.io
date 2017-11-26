@@ -1,0 +1,159 @@
+---
+layout: post
+title: oracle
+date: 2017-09-12 13:32:20 +0300
+description: # Add post description (optional)
+img: 10.jpg # Add image post (optional)
+tags: [Holidays, Hawaii]
+---
+
+
+oracle
+	--SQL语句执行顺序:
+--from-->on-->join-->where-->group by-->with<cube|rollup>-->having--
+-->select-->distinct-->order by-->top
+
+	--创建表空间
+	create tablespace waterboss
+	datafile 'c:\waterboss.dbf'
+	size 100m
+	autoextend on
+	next 10m
+
+	--创建用户
+	create user wateruser
+	identified by cjw123
+	default tablespace waterboss
+
+	--给用户赋值权限
+	grant dba to wateruser
+
+
+	--常用字符函数
+		--求字符串长度
+		select length('ABCD') from dual
+
+		--求字符串子串(原字符串,从第几位截取)
+		select substr('ABCD',2,2) from dual
+
+		--字符串拼接
+		select concat(concat('ABC','D'),'EF') from dual
+		select 'ABC'||'D'||'EF' from dual
+
+	--常用数值函数
+		--四舍五入
+		select round(100.456,2) from dual//100.47
+
+		--数字截取
+		select trunc(100.999) from dual//100
+		select trunc(100.999,2) from dual//100.99
+
+		--取模(取余数)
+		select mod(10,3) from dual //1
+
+	--常用日期函数
+		--加月函数
+		select add_months(sysdate,2) from dual
+
+		--求所在月的最后一天
+		select last_day(sysdate) from dual
+
+		--日期截取
+		select trunc(sysdate) from dual//按日截取(截取掉时间)
+		select trunc(sysdate,'mm') from dual//按月截取(把日截掉)
+		select trunc(sysdate,'yyyy') from dual//按年截取
+		select trunc(sysdate,'hh') from dual//按小时截取
+		select trunc(sysdate,'mi') from dual//按分钟截取
+
+	--转换函数
+		--数字转字符串
+		select to_char(100) from dual
+		select 100||'' from dual
+
+		--日期转字符串
+		select to_char(sysdate,'yyyy-mm-dd') from dual
+		select to_char(sysdate,'yyyy')||'年'||to_char(sysdate,'mm')||'月'||to_char(sysdate,'dd')||'日' from dual
+
+		--字符串转日期
+		select to_date('2017-10-25','yyyy-mm-dd') from dual
+
+		--字符串转数字
+		select to_number('100')+10 from dual
+
+	--其他函数
+		--空值处理函数
+		select nvl(null,0) from dual//当第一个值null,返回第二个值,否则返回第一个值	
+		select nvl(maxnum,9999999) from t_pricetable where ownertypeid=1
+
+		select nvl2(20,0,100) from dual//第一个值为null,返回第二个值,否则返回第三个值
+		select nvl(maxnum,to_char(maxnum),'不限') from t_pricetable whereownertypeid=1
+
+		--decode 条件取值
+		select decode(100,1,2,3,4,100,200) from dual
+		select name,decode(ownertypeid,1,'居民',2,'行政事业单位',3,'商业') from t_owners
+
+		--case when then(SQL1999标准)
+		select name,(case  
+							when ownertypeid=1 then '居民'
+							when ownertypeid=2 then '行政事业单位'
+							when ownertypeid=3 then '商业'
+							else '其它'
+					end) from t_owners
+
+	--行列转换
+		select (select name from t_address where id=areaid ) 区域,
+			sum(case when month='01' then money else 0 end) 一月,
+			sum(case when month='02' then money else 0 end) 二月,
+			sum(case when month='03' then money else 0 end) 三月,
+			sum(case when month='04' then money else 0 end) 四月,
+			sum(case when month='05' then money else 0 end) 五月,
+			sum(case when month='06' then money else 0 end) 六月,
+			sum(case when month='07' then money else 0 end) 七月,
+			sum(case when month='08' then money else 0 end) 八月,
+			sum(case when month='09' then money else 0 end) 九月,
+			sum(case when month='10' then money else 0 end) 十月,
+			sum(case when month='11' then money else 0 end) 十一月,
+			sum(case when month='12' then money else 0 end) 十二月,
+		from t_account where year='2012' group by areaid
+
+	--分析函数
+		--值相同,排名相同,序号跳跃
+		select rank() over(order by usenum desc) 排名,t.* from t_account t;	
+
+		--值相同,排名相同,序号连续
+		select dense_rank() over(order by usenum desc) 排名,t.* from t_account t;
+
+		--序号连续,不管值是否相等
+		select row_number() over(order by usenum desc) 排名,t.* from t_account t;
+		--用分析函数来实现分页
+		select * from 
+			(select row_number() over(order by nsenum desc) rownumber,usenum from t_account)
+			where rownumber>10 and rownumber<=20
+
+	--集合运算	
+		--并集(包括重复记录)
+		select * from t_owners where id>5
+		union all
+		select * from t_owners where id<8
+		--并集(去掉重复记录)
+		select * from t_owners where id>5
+		union
+		select * from t_owners where id<8
+
+		--交集
+		select * from t_owners where id>5
+		intersect
+		select * from t_owners where id<8
+
+		--差集
+		select * from t_owners where id>5
+		minus
+		select * from t_owners where id<8
+		--差集来分页
+		select romnum,t.* from (select * from t_account order by usenum desc) t where romnum<=20
+		minus
+		select romnum,t.* from (select * from t_account order by usenum desc) t where romnum<=10
+
+
+
+		

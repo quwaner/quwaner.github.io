@@ -1,0 +1,327 @@
+---
+layout: post
+title: SSH框架整合
+date: 2017-09-12 13:32:20 +0300
+description: # Add post description (optional)
+img: 4.jpg # Add image post (optional)
+tags: [Holidays, Hawaii]
+---
+SSH框架整合
+	(SSH)struts2 2.3.24
+		 Spring  4.2.4
+		 hibernate 5.0.7
+
+	jar包分析:
+		struts2:
+
+			asm.-3.3.jar
+			asm-commons-3.3.jar
+			asm-tree-3.3.jar
+				asm 是关于字节码操作
+
+	   		commons-fileupload-1.3.1.jar	
+				commons-fileupload 关于文件上传
+
+			commons-io-2.2.jar
+				commons-io 关于io流操作工具
+
+			commons-lang3-3.2.jar	
+				commons-lang 一个工具,包含了关于数据和字符串操作
+
+			freemakes-2.3.22.jar	
+				freemakes 标准库模板文件
+
+			javassist-3.11.0.GA.jar
+				javassist 关于字节码操作,动态代理可以使用它来实现(类似于cglib)
+			
+			log4j-api-2.2.jar
+			log4j-core-2.2.jar
+				log4j 关于日志
+
+			ognl-3.0.6.jar	
+				ognl 关于ognl表达式
+
+			struts2-core-2.3.24.jar
+			xwork-core-2.3.24.jar	
+				struts2-core  xwork-core struts2框架底层使用的xwork
+			
+			struts2-spring-plugin-2.3.24.jar
+				struts2与spring整合需要
+
+			struts2-json-plugin-2.3.24.jar
+				使用struts2提供的json处理需要这个包	
+
+			struts2-convention-plugin-2.3.24.jar
+				使用注解方案需要这个包	
+
+		hibernate:
+			antlr.2.7.7.jar
+			    antlr 语法解析包
+
+			dom4j-1.6.1.jar    
+			    dom4j 解析xml
+
+		    geronimo-jta_1.1_spec-1.1.1.jar
+			    geronimo-jta apache Geronimo是一个开源的javaEE服务器.	geronimo-jta是
+				这个开源项目提供的jar包,在hibernate中关于jta事务相关
+
+		    hibernate-commons-annotations-5.0.1.jar
+			    hibernate-commoins-annotations 在hibernate下使用jpa相关注解,这样就不依赖与hibernate
+			    
+			hibernate-core-5.0.7.Final.jar
+			    hibernate-core 开发hibernate必须的
+
+			hibernate-jpa-2.1-api-1.0.0.Final.jar    
+			    hibernate-jpa 关于hibernate对jpa的支持
+
+			jandex-2.0.0.Final.jar    
+			    jandex 用于索引annotation
+
+			javassist-3.18.1-GA.jar    
+			    javassist 关于字节码操作
+
+			jboss-logging-3.3.0.Final.jar    
+			    jboss-logging 关于jboss统一日志处理
+
+			hibernate-entitymanager-5.0.7.Fianl.jar  
+				使用关于jpa相关操作需要导入jpa依赖jar包  
+
+			c3p0-0.9.2.1.jar
+			hibernate-c3p0-5.0.7.Final.jar
+			mchange-commons-java-0.2.3.4.jar
+				C3P0连接池需要的jar包
+
+			mysql-connector-java-5.1.7-bin.jar
+			ojdbc14-10.2.0.1.0.jar
+				数据库相关的驱动jar包
+
+			slf4j-api-1.6.1.jar
+			slf4j-log4j12-1.7.2.jar
+				静态日志处理jar包		
+
+		Spring:
+	    	spring-beans-4.2.4.RELEASE.jar
+		    spring-context-4.2.4.RELEASE.jar
+		    spring-core-4.2.4.RELEASE.jar
+		    spring-expression-4.2.4.RELEASE.jar
+		    	Spring最基本的jar包
+
+		    spring-aop-4.2.4.RELEASE.jar
+	    	aopalliance-1.0.jar
+	    	aspectjweaver-1.8.7.jar
+	    	spring-aspects-4.2.4.RELEASE.jar
+	    		AOP开发需要
+
+
+	    	spring-tx-4.2.4.RELEASE.jar //事务管理需要
+	    	spring-jdbc-4.2.4.RELEASE.jar
+	    		spring jdbc需要导入jar包
+
+	    	spring-orm-4.2.4.RELEASE.jar
+				spring整合hibernate需要
+
+	        spring-web-4.2.4.RELEASE.jar
+	        	spring整合web开发
+
+	        junit-4.9-jar		
+			spring-test-4.2.4.RELEASE.jar
+				整合junit测试需要
+
+			commons-logging-1.2.jar	
+				日志包
+
+
+			关于applicationContext.xml的约束和名称空间,选择如下基本可以满足要求:
+			<beans xmlns="http://www.springframework.org/schema/beans"
+			    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			    xmlns:context="http://www.springframework.org/schema/context" 
+			    xmlns:aop="http://www.springframework.org/schema/aop"
+			    xmlns:tx="http://www.springframework.org/schema/tx"
+			    xsi:schemaLocation="
+			        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+			        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+			        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+			        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+	        </bean>
+	一.关于xml配置文件的整合方式	
+
+	Spring整合hibernate案例总结:
+		1.整个案例是一个web的小demo,所以首先Spring与web整合,使得项目一启动就能加载SpringIOC容器
+		也就是加载applicationContext.xml文件:
+		在web.xml文件中配置如下:
+		<context-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:applicationContext.xml</param-value>
+		</context-param>
+		<listener>
+			<listener-class>ContextLoaderListener</listener-class>
+		</listener>
+		同时在applicationContext.xml文件中提供了LocationSessionFactory来加载Hibernate的配置文
+		件之后,可以达到一启动服务器,就能自动创建表
+
+		2.Spring管理hibernate配置,就是将之前hibernate中的hibernate.cfg.xml文件中配置的内容,转移
+		到applicationContext.xml文件中来.
+		在原来的hibernate.cfg.xml文件中主要配置了三大块内容:
+							a.数据库连接相关的配置(可以选择properties文件来配置,然后关联)
+							b.数据库方言配置,以及一些可选择的配置
+							c.与实体类.hbm.xml映射的配置
+			所以:第一步需要将这些配置转移到applicationcContext.xml中	
+			
+			所需要的db.properties文件:
+			jdbc.driverClass=com.mysql.jdbc.Driver
+			jdbc.url=jdbc:mysql:///sshtest
+			jdbc.username=root
+			jdbc.password=1234	
+
+			需要提醒的是:实体类.hbm.xml文件还是需要正常配置:
+
+			applicationContext.xml文件配置如下:
+
+			第一步:导入properties文件:
+				<context:property-placeholder location="classpath:db.properties"/>
+			第二步:配置连接池,选择c3p0为例:
+				<bean id="c3p0DataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+					<property name="driverClass" value="${jdbc.driverClass}"></property>
+					<property name="jdbcUrl" value="${jdbc.url}"></property>
+					<property name="user" value="${jdbc.username}"></property>
+					<property name="password" value="${jdbc.password}"></property>
+				</bean>
+			第三步:创建localSessionFactory来完成Spring管理hibernate中的sessionFactory操作
+				<bean name="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+					<!-- 加载连接池 -->
+					<property name="dataSource" ref="c3p0DataSource"></property>
+					<!-- 方言以及其他可选内容的配置 -->
+					<property name="hibernateProperties">
+						<value>
+							hibernate.show_sql=true
+							hibernate.dialect=org.hibernate.dialect.MySQLDialect
+							hibernate.hbm2ddl.auto=update
+							hibernate.format_sql=true
+						</value>
+					</property>
+					<!-- 映射文件 -->
+					<property name="mappingResources">
+						<list>
+							<value>com/itheima/domain/User.hbm.xml</value>
+						</list>
+					</property>
+					//关于映射文件的配置一共有四种方式:
+						//mappingResources它类似于我们之前<mapping resource=””>
+						//mappingLocations它加载时是根据类路径加载 classpath:路径
+						//mappingJarLocations它会加载jar文件中的hbm.xml文件
+						//mappingDirectoryLocations 它加载的目录
+				</bean>	
+			第三步:配置service层和dao层的内容
+				<!-- 配置UserService -->
+				<bean name="userService" class="com.itheima.service.UserServiceImpl">
+					<property name="userDao" ref="userDao"></property>
+				</bean>
+				<!-- 配置UserDao -->
+				<bean name="userDao" class="com.itheima.dao.UserDaoImpl">
+					<property name="sessionFactory" ref="sessionFactory"></property>
+				</bean>
+			第四歩:配置事务(整合时必须手动配置事务)
+				<!-- 配置声明式事务管理 -->
+				<bean name="hibernateTransactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+					<property name="sessionFactory" ref="sessionFactory"></property>
+				</bean>
+				<!-- 通知 -->
+				<tx:advice id="txAdvice" transaction-manager="hibernateTransactionManager">
+					<tx:attributes>
+						<tx:method name="find*" read-only="true" />
+						<tx:method name="add"/>
+						<tx:method name="delete"/>
+						<tx:method name="update"/>
+					</tx:attributes>
+				</tx:advice>
+				<!-- 切面 -->
+				<aop:config>
+					<aop:pointcut expression="execution(* com.itheima.service.*..*(..))" id="mypointcut"/>
+					<aop:advisor advice-ref="txAdvice" pointcut-ref="mypointcut"/>
+				</aop:config>	
+
+
+	Spring整合struts2案例总结:
+		1.整合struts2不需要太多的配置,因为很多配置都是框架封装好,只需要将原本由struts2自身来管理bean(struts2中
+		所有的action,interceptor,result都是bean)初始化的权利交给Spring就完成了大部分的配置.而这个权利的转移也
+		只需要导入struts2-spring-plugin.jar的包.在default.properties文件和struts-default.xml文件加载之后,这
+		个包中有一个struts-plugin.xml的文件会加载,其中有一段配置:
+			<bean type="com.opensymphony.xwork2.ObjectFactory" name="spring" class="org.apache.struts2.spring.StrutsSpringObjectFactory"/>
+			<constant name="struts.objectFactory" value="spring">
+		这一段配置将原本的配置覆盖,实现了项目中的bean由Spring来管理.
+		2.接下来就是实现Spring对struts2的完全整合:有两种方式:
+									基于spring管理Action(就是在applicationContext.xml文件中来声明action)
+									action自动装配service
+			a.在基于spring管理action的方式之中,主要是需要在applicationContext.xml中配置bean的实体类,然后在
+			struts.xml中与之关联:
+			applicationContext.xml配置:
+			<bean id="userAction" class="com.itheima.web.action.UserAction">
+				<property name="userService" ref="userService"/>//属性注入需要提供对应的set方法
+			</bean>						
+			struts.xml文件中:
+			<action name="user_*" class="userAction" method="{1}">//class值就是bean的id值
+				<result name="success">/success.jsp</result>
+			</action>
+
+			b.在action自动装配service的防止之中,不需要在applicationContext.xml文件中配置bean的内容,struts.xml
+			文件也是照常配置(class还是com.itheima.web.action.UserAction),此时就需要考虑一个问题:本来通过applicationContext.xml
+			文件配置bean时注入的userService是怎样进来的呢?
+				这个问题的解决是通过default.properties中的一个参数来解决的:
+					struts.objectFactory.spring.autoWire=name
+				这个参数的设定是默认在这种方式下可以直接通过名称来注入我们需要的userService,只需要控制action类中
+				userService变量的set方法中set后面的名称和applicationContext.xml中配置UserService实现类的id或
+				者name相同就行了.
+				同时这种属性注入的方式也可以通过我们自身的配置来修改:
+				struts.xml文件中配置<constant name="struts.objectFactory.spring.autoWire" value="type">
+				此时可以根据type的类型来注入属性.
+
+	至此,SSH通过XML文件形式的整合基本结束.			
+
+
+
+
+	二.关于annotation的整合方式
+
+		至于anno方式的整合,在xml方式掌握之后,只需要使用注解来替代xml文件中的部分配置就可以完成.因为注解和xml方式的关系是:
+		xml文件能做到的,annotation不一定能做,但是annotation能做的,xml一定能做.
+		关于annotation的整合,第一步还是在xml文件方式配置的基础之上多导入一个识别struts2框架的注解(@Namespace @Action)的
+		jar包:struts2-conventioin-plugin-2.3.24.jar
+		web.xml文件中的配置不需要任何改变.
+		本来通过 实体类.hbm.xml配置PO类的相关信息,现在只需要JPA注解来定义:
+			JPA部分注解:@Entity  定义实体类
+					   @Table 定义表
+					   @Id 主键
+					   @GeneratedValue 生成主键策略
+					   @Column 定义列
+		applicationContext.xml文件中很多内容都可以通过注解替代:
+			导入propertity文件,连接池配置都不需要改变.
+			创建localSessionFactory完成Spring管理hibernate中的sessionFactory的配置之中,只需要改变
+			加载映射文件部分的配置,因为注解的方式配置PO类,导致映射文件(XXX.cfg.xml)不存在了,所以新的配置
+			直接将所有PO类加载到sessionFactory之中即可.
+				配置如下:
+				<property name="packagesToScan">
+					<list>
+						<value>com.itheima.domain</value>
+					</list>
+				</property>
+			关于action,service,dao层的bean类都可以通过注解来实现
+				部分注解	: @Controlller("") @Service("")  @repository("") @component("")来实例化bean对象
+						配合@Autowired和@Qualifier("")来注入对应属性
+					注意一点的就是:这些注解需要开启注解扫描
+					在applicationContext.xml文件中:
+					<context:component-scan base-package="com.itheima"/>
+
+					action层的注解特别注意一点的是@Scope("prototype"),一定要配置成多例.因为浏览器传过来的每
+					一个请求都对应一个request--ActionContext--Action--ValueStack 他们都对应着一次请求(一个线程).
+						@Namespace("'") @ParentPackage("") @Action(value="",results={@Result(name="",location="")})
+
+			关于事务管理的注解配置,相比较xml方式简单很多.
+				在appl.xml文件中只保留事务管理器的配置,然后加上一顿事务注解驱动的配置即可:
+				配置如下:
+					<tx:annotation-driven transaction-manager="transactionManager"/>
+				然后根据具体需求将注解添加到service层的类上或者方法上都可以	
+					注解:@Transactional() 括号内可以配置只读,超时传播等等.	
+
+
+		至此,注解配置方案基本结束.			
+
